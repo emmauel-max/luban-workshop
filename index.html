@@ -168,6 +168,11 @@
                         <i data-lucide="user" class="h-4 w-4"></i>
                         <span id="user-email-desktop"></span>
                     </button>
+                    <a id="admin-btn-desktop" href="admin.html"
+                        class="hidden items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-stone-800 rounded-md hover:bg-stone-900 transition-colors">
+                        <i data-lucide="shield" class="h-4 w-4"></i>
+                        Admin Dashboard
+                    </a>
                 </div>
 
                 <div class="flex items-center md:hidden gap-4">
@@ -202,6 +207,11 @@
                     <i data-lucide="user" class="h-4 w-4 inline mr-2"></i>
                     <span id="user-email-mobile"></span>
                 </button>
+                <a id="admin-btn-mobile" href="admin.html"
+                    class="hidden px-3 py-2 rounded-md text-base font-medium text-white bg-stone-800 hover:bg-stone-900">
+                    <i data-lucide="shield" class="h-4 w-4 inline mr-2"></i>
+                    Admin Dashboard
+                </a>
             </div>
         </div>
     </nav>
@@ -739,13 +749,15 @@
         let currentUser = null; // NEW: Track the logged-in user
 
         // --- Firebase Auth State Observer ---
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
             currentUser = user; // Store user for checkout
 
             const authBtnDesktop = document.getElementById('auth-btn-desktop');
             const authBtnMobile = document.getElementById('auth-btn-mobile');
             const userInfoDesktop = document.getElementById('user-info-desktop');
             const userInfoMobile = document.getElementById('user-info-mobile');
+            const adminBtnDesktop = document.getElementById('admin-btn-desktop');
+            const adminBtnMobile = document.getElementById('admin-btn-mobile');
             const myOrdersLinkDesktop = document.getElementById('my-orders-link-desktop');
             const myOrdersLinkMobile = document.getElementById('my-orders-link-mobile');
             const myOrdersSection = document.getElementById('my-orders');
@@ -765,7 +777,33 @@
                 const emailPrefix = user.email.split('@')[0];
                 document.getElementById('user-email-desktop').textContent = emailPrefix;
                 document.getElementById('user-email-mobile').textContent = emailPrefix;
-                
+
+                // Check if user is an admin
+                let isAdmin = false;
+                try {
+                    const tokenResult = await user.getIdTokenResult();
+                    if (tokenResult.claims.admin === true) isAdmin = true;
+                } catch (e) { console.error('Failed to fetch admin token:', e); }
+
+                if (!isAdmin && user.email === 'admin@luban.com') isAdmin = true;
+
+                if (!isAdmin && user.email) {
+                    try {
+                        const adminDoc = await db.collection('admins').doc(user.email.toLowerCase()).get();
+                        if (adminDoc.exists) isAdmin = true;
+                    } catch (e) { console.error('Failed to check admin status:', e); }
+                }
+
+                if (isAdmin) {
+                    adminBtnDesktop.classList.remove('hidden');
+                    adminBtnDesktop.classList.add('flex');
+                    adminBtnMobile.classList.remove('hidden');
+                    adminBtnMobile.classList.add('block');
+                } else {
+                    adminBtnDesktop.classList.add('hidden');
+                    adminBtnMobile.classList.add('hidden');
+                }
+
                 // Load user's orders
                 loadMyOrders(user);
                 listenToMyOrders(user);
@@ -775,6 +813,8 @@
                 authBtnMobile.classList.remove('hidden');
                 userInfoDesktop.classList.add('hidden');
                 userInfoMobile.classList.add('hidden');
+                adminBtnDesktop.classList.add('hidden');
+                adminBtnMobile.classList.add('hidden');
                 myOrdersLinkDesktop.classList.add('hidden');
                 myOrdersLinkMobile.classList.add('hidden');
                 myOrdersLinkMobile.classList.remove('block');
