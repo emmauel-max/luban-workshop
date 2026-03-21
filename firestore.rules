@@ -43,12 +43,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // priceOverrides collection – stores temporary price overrides for dishes
-    match /priceOverrides/{dishId} {
-      // Anyone can read (main site and menu page need to show updated prices)
+    // menuPrices collection – stores admin-overridden prices for hardcoded dishes
+    match /menuPrices/{dishId} {
+      // Anyone can read (main site and menu page need to display current prices)
       allow read: if true;
-
-      // Only admins can create or update price overrides
+      
+      // Only admins can update prices
       allow write: if isAdmin();
     }
     
