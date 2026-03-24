@@ -23,6 +23,18 @@ Both files implement the following security policies:
   - Production version: Requires admin custom claim
   - Development version: Accepts either admin custom claim OR admin@luban.com email
 
+### menuPrices Collection
+- **Read Access**: Anyone (authenticated or not) can read price overrides (needed by the main site and menu page to display the current price)
+- **Write Access**: Only authenticated admin users can set or delete price overrides
+  - Production version: Requires admin custom claim
+  - Development version: Accepts either admin custom claim OR admin@luban.com email
+- **Revert**: Deleting the document for a dish restores its original hardcoded price. The admin panel exposes a "Revert to original" (↩) button for every dish that has an active price override.
+
+### priceOverrides Collection (legacy)
+- **Read Access**: Anyone (authenticated or not) can read temporary price overrides
+- **Write Access**: Only authenticated admin users can manage overrides
+- This collection supports an older time-based auto-revert model (`revertAt` field). Active price management now uses the `menuPrices` collection instead.
+
 ### orders Collection
 - **Read Access**: Admins can read all orders; authenticated customers can read their own orders
 - **Create Access**: Any authenticated user can place an order
@@ -134,6 +146,19 @@ This is the more secure approach that prevents spoofing:
 - Log in with `admin@luban.com`
 - Try to add/edit/delete menu items
 - Operations should succeed
+
+### Test menuPrices Write (Should Pass for Admin)
+- Log in with `admin@luban.com` and open the admin dashboard
+- Click the **pencil** icon next to any dish, enter a new price, and click **Save Price**
+- The updated price should appear instantly on the Menu Manager table (marked "edited") and on the public menu page
+
+### Test menuPrices Revert (Should Pass for Admin)
+- After setting a price override, click the **↩ Revert** button next to the dish
+- Confirm the dialog — the price should return to the original hardcoded value
+
+### Test menuPrices Write (Should Fail for Non-Admin)
+- Try to write to the `menuPrices` collection while logged in as a non-admin user
+- The Firestore write should be denied
 
 ### Test reservations Write (Should Pass for Authenticated Users)
 - Log in with any authenticated user

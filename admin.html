@@ -559,6 +559,9 @@
                 const priceLabel = menuPriceOverrides[dish.id] !== undefined
                     ? `<span class="font-mono text-red-700">₵${currentPrice}</span> <span class="text-xs text-stone-400">(edited)</span>`
                     : `<span class="font-mono">₵${currentPrice}</span>`;
+                const revertBtn = menuPriceOverrides[dish.id] !== undefined
+                    ? `<button onclick="revertPrice('${dish.id}')" class="text-stone-400 hover:text-amber-600 transition-colors mr-3" title="Revert to original price (₵${dish.price})"><i data-lucide="rotate-ccw" class="h-4 w-4"></i></button>`
+                    : '';
                 const row = `
                     <tr class="hover:bg-stone-50 transition-colors${isHidden ? ' opacity-60' : ''}">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">${dish.name}</td>
@@ -569,7 +572,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm">${statusBadge}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick="openPriceModal('${dish.id}', ${JSON.stringify(dish.name).replace(/"/g, '&quot;')}, ${currentPrice})" class="text-stone-400 hover:text-blue-600 transition-colors mr-3" title="Edit price"><i data-lucide="pencil" class="h-4 w-4"></i></button>
-                            <button onclick="toggleDishVisibility('${dish.id}', ${isHidden})" class="text-stone-400 hover:text-red-700 transition-colors" title="${toggleTitle}"><i data-lucide="${toggleIcon}" class="h-4 w-4"></i></button>
+                            ${revertBtn}<button onclick="toggleDishVisibility('${dish.id}', ${isHidden})" class="text-stone-400 hover:text-red-700 transition-colors" title="${toggleTitle}"><i data-lucide="${toggleIcon}" class="h-4 w-4"></i></button>
                         </td>
                     </tr>
                 `;
@@ -625,6 +628,21 @@
             } catch (error) {
                 console.error('Error saving price:', error);
                 alert('Failed to save price. Please try again.');
+            }
+        }
+
+        async function revertPrice(dishId) {
+            const dish = HARDCODED_MENU.find(d => d.id === dishId);
+            if (!dish) {
+                console.error('Cannot revert: dish not found for id', dishId);
+                return;
+            }
+            if (!confirm(`Revert price for "${dish.name}" back to the original (₵${dish.price})?`)) return;
+            try {
+                await db.collection('menuPrices').doc(dishId).delete();
+            } catch (error) {
+                console.error('Error reverting price:', error);
+                alert('Failed to revert price. Please try again.');
             }
         }
 
