@@ -24,9 +24,9 @@
   "categories": ["food", "shopping"],
   "screenshots": [
     {
-      "src": "restcon.png",
+      "src": "og-preview.png",
       "type": "image/png",
-      "sizes": "1280x720",
+      "sizes": "1200x630",
       "form_factor": "wide"
     }
   ]
